@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-Time Speed Display</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f8ff;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            border: 5px solid #ff4500;
+            border-radius: 20px;
+            background-color: #ffefd5;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            font-size: 4em;
+            color: #ff4500;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 3em;
+            color: #008080;
+        }
+        #speed {
+            font-size: 5em;
+            color: #ff69b4;
+            display: inline-block;
+            padding: 10px 20px;
+            border: 3px dashed #008080;
+            border-radius: 10px;
+            background-color: #fff8dc;
+        }
+        .funny-message {
+            font-size: 2em;
+            color: #6a5acd;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real-Time Speed Display</h1>
+        <div>
+            <h2>Max Speed (Last 3 Seconds): <span id="speed">0</span> m/s</h2>
+        </div>
+        <div class="funny-message">
+            Whoa! That's fast!
+        </div>
+    </div>
+
+    <script>
+        var socket = io();
+
+        socket.on('update_speed', function(data) {
+            document.getElementById('speed').innerText = data.max_speed;
+        });
+    </script>
+</body>
+</html>
+

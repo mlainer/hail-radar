@@ -1,0 +1,23 @@
+version: '3.3'
+
+services:
+  ops_hail_radar:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    restart: always    
+
+  mqtt_logger:
+    build:
+      context: .
+      dockerfile: Dockerfile.mqtt_logger
+    volumes:
+      - ./mqtt_logger:/app/mqtt_logger
+    depends_on:
+      - ops_hail_radar
+    #entrypoint: ["/app/wait-for-it.sh", "ops_hail_radar:8880", "--", "python", "start_mqtt_logger.py"]
+    restart: always

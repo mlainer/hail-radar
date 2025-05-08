@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Temperature Data</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Temperature Data</h1>
+    <div id="temperatureChart"></div>
+    <script>
+        async function fetchData() {
+            const response = await fetch('/data');
+            const data = await response.json();
+            console.log('Fetched data:', data);
+            return data;
+        }
+
+        async function drawChart() {
+            const data = await fetchData();
+            console.log('Data for chart:', data);
+
+            const trace1 = {
+                x: data.labels,
+                y: data.datasets[0].data,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Temperature (°C)',
+                line: { color: 'rgba(75, 192, 192, 1)' }
+            };
+
+            const trace2 = {
+                x: data.labels,
+                y: data.datasets[1].data,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Temperature (°F)',
+                line: { color: 'rgba(255, 99, 132, 1)' }
+            };
+
+            const layout = {
+                title: 'Temperature Data',
+                xaxis: {
+                    title: 'Time',
+                    type: 'date'
+                },
+                yaxis: {
+                    title: 'Temperature'
+                }
+            };
+
+            Plotly.newPlot('temperatureChart', [trace1, trace2], layout);
+        }
+
+        drawChart();
+    </script>
+</body>
+</html>
+

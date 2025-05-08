@@ -1,0 +1,69 @@
+import os
+import glob
+import time
+import mysql.connector
+from datetime import datetime
+
+base_dir = '/sys/bus/w1/devices/'
+device_folder = glob.glob(base_dir + '28*')[0]
+device_file = device_folder + '/w1_slave'
+
+def read_temp_raw():
+    with open(device_file, 'r') as f:
+        lines = f.readlines()
+    return lines
+
+def read_temp():
+    lines = read_temp_raw()
+    while lines[0].strip()[-3:] != 'YES':
+        time.sleep(0.2)
+        lines = read_temp_raw()
+    equals_pos = lines[1].find('t=')
+    if equals_pos != -1:
+        temp_string = lines[1][equals_pos+2:]
+        temp_c = float(temp_string) / 1000.0
+        temp_f = temp_c * 9.0 / 5.0 + 32.0
+        return temp_c, temp_f
+
+def log_to_db(temp_c, temp_f):
+    retries = 5
+    delay = 5  # initial delay in seconds
+    for i in range(retries):
+        try:
+            conn = mysql.connector.connect(
+                host=os.environ['MYSQL_HOST'],
+                database=os.environ['MYSQL_DB'],
+                user=os.environ['MYSQL_USER'],
+                password=os.environ['MYSQL_PASSWORD']
+            )
+            cur = conn.cursor()
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS temperature (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    timestamp TIMESTAMP,
+                    temp_c FLOAT,
+                    temp_f FLOAT
+                )
+            ''')
+            cur.execute(
+                "INSERT INTO temperature (timestamp, temp_c, temp_f) VALUES (%s, %s, %s)",
+                (datetime.now(), temp_c, temp_f)
+            )
+            conn.commit()
+            cur.close()
+            conn.close()
+            print("Logged to DB successfully")
+            break
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            if i < retries - 1:
+                time.sleep(delay)
+                delay *= 2  # exponential backoff
+            else:
+                print("Failed to log to DB after several retries")
+
+while True:
+    temp_c, temp_f = read_temp()
+    log_to_db(temp_c, temp_f)
+    time.sleep(10)
+

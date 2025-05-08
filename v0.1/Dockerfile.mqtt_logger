@@ -1,0 +1,23 @@
+# Use the official Python 3.7.6 image from the Docker Hub
+FROM python:3.7.6-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the requirements file into the container at /app
+COPY requirements.txt .
+
+# Install the dependencies specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install SQLite3
+RUN apt-get update && apt-get install -y sqlite3 netcat
+
+# Copy the entire mqtt_logger directory into the container at /app/mqtt_logger
+COPY mqtt_logger /app/mqtt_logger
+
+# Set the working directory to where your MQTT logger script resides
+WORKDIR /app/mqtt_logger
+
+# Command to run the MQTT logger
+CMD ["python", "start_mqtt_logger.py"]

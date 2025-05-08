@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  temp_logger:
+    build: ./temp_logger
+    volumes:
+      - /sys/bus/w1/devices:/sys/bus/w1/devices  # Bind mount for sensor data
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_DB=temperature_db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: linuxserver/mariadb:alpine
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: temperature_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"  # Expose MySQL port to the host
+    volumes:
+      - mysql_data:/config/databases  # Persist the data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
+
+  web_temp:
+    build: ./web_temp
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    restart: always
+  
+  web_speed:
+    build: ./web_speed
+    ports:
+      - "5005:5005"    
+    depends_on:
+      - db
+    restart: always    
+
+  ops_logger:
+    build: ./ops_logger
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_DB=hail_speed_db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    depends_on:
+      - db
+    restart: always
+    privileged: true   # Add this line to give the container necessary permissions
+    devices:
+      - /dev/ttyAMA0:/dev/serial0
+
+volumes:
+  mysql_data:
+
